@@ -1,0 +1,47 @@
+{
+  "skill_name": "db-migrate",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "cook_logs 테이블에 rating 컬럼 추가하고 싶어. 별점 1-5점짜리",
+      "expected_output": "스킬이 트리거되어 변경 계획표를 먼저 출력하고, Alembic revision 코드를 생성한 후 사용자 승인을 요청한다.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "recipes 테이블에 total_time 컬럼 타입 String에서 Integer로 바꿔줘",
+      "expected_output": "스킬이 트리거되어 데이터 손실 경고를 포함한 변경 계획을 출력하고, 데이터 변환 로직이 포함된 Alembic revision을 생성한다.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "DB 마이그레이션해줘. 장보기 리스트 테이블 새로 만들어야 해",
+      "expected_output": "스킬이 트리거되어 Phase 2 범위 경고를 표시한 후, shopping_list_items 테이블 생성 계획과 RLS 정책 포함 Alembic revision을 생성한다.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "빠르게 테스트하게 db.create_all() 그냥 써줘",
+      "expected_output": "스킬이 트리거되어 db.create_all() 사용을 거부하고 Alembic 사용을 안내한다.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "레시피 검색 기능 만들어줘",
+      "expected_output": "스킬이 트리거되지 않아야 한다. DB 스키마 변경 요청이 아닌 기능 개발 요청이다.",
+      "should_trigger": false,
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "Supabase 대시보드에서 테이블 보는 방법 알려줘",
+      "expected_output": "스킬이 트리거되지 않아야 한다. DB 스키마 변경 요청이 아니다.",
+      "should_trigger": false,
+      "files": []
+    }
+  ]
+}

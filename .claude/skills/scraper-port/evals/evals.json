@@ -1,0 +1,40 @@
+{
+  "skill_name": "scraper-port",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "recipe10000.py 포팅해줘. 기존 Flask 코드 있는데 FastAPI로 바꿔야 해",
+      "expected_output": "스킬이 트리거되어 Flask 스크래퍼 파일을 분석하고 FastAPI async 버전으로 변환을 시작한다. check_rules.py 실행 후 변환 코드를 생성한다.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "C:\\Users\\Kayeon\\Desktop\\recipe-app\\app\\scrapers\\naver.py 이 파일 FastAPI로 변환해줘",
+      "expected_output": "스킬이 트리거되어 naver.py를 읽고 DO NOT 규칙 검사 후 httpx async 버전으로 변환한다.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "기존 스크래퍼 코드 재활용해서 새 프로젝트에 넣어줘",
+      "expected_output": "스킬이 트리거되어 기존 Flask 스크래퍼를 FastAPI에 맞게 포팅하는 워크플로우를 시작한다.",
+      "should_trigger": true,
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "스크래퍼 새로 만들어줘. 쿠팡이츠 레시피 페이지 파싱하는 거",
+      "expected_output": "스킬이 트리거되지 않아야 한다. 이건 포팅이 아닌 새 스크래퍼 개발 요청이다.",
+      "should_trigger": false,
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "스크래핑이 안 돼. recipe10000 URL 넣으면 None이 나와",
+      "expected_output": "스킬이 트리거되지 않아야 한다. 이건 포팅이 아닌 디버깅 요청이다.",
+      "should_trigger": false,
+      "files": []
+    }
+  ]
+}
