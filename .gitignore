@@ -18,13 +18,9 @@ build/
 htmlcov/
 .coverage
 
-# Flutter
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-build/
-*.iml
+# Node
+node_modules/
+dist/
 
 # OS
 .DS_Store
@@ -36,6 +32,9 @@ desktop.ini
 .vscode/
 *.swp
 *.swo
+
+# Claude Code 로컬 설정
+.claude/settings.local.json
 
 # 로그
 *.log
