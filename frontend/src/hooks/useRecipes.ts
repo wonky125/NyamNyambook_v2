@@ -37,6 +37,7 @@ export function useRecipe(id: number) {
       const { data } = await api.get(`/recipes/${id}`);
       return data as RecipeDetail;
     },
+    enabled: Number.isInteger(id) && id > 0,
   });
 }
 
