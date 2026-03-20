@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import RecipeAdd from './pages/RecipeAdd';
 import RecipeDetail from './pages/RecipeDetail';
 import RecipeEdit from './pages/RecipeEdit';
+import Shopping from './pages/Shopping';
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ function AppRoutes() {
       <Route path="/add" element={session ? <RecipeAdd /> : <Navigate to="/" />} />
       <Route path="/recipes/:id" element={session ? <RecipeDetail /> : <Navigate to="/" />} />
       <Route path="/recipes/:id/edit" element={session ? <RecipeEdit /> : <Navigate to="/" />} />
+      <Route path="/shopping" element={session ? <Shopping /> : <Navigate to="/" />} />
     </Routes>
   );
 }

@@ -4,6 +4,7 @@ from app.models.recipe_step import RecipeStep
 from app.models.ingredient import Ingredient, RecipeIngredient
 from app.models.tag import Tag, RecipeTag
 from app.models.cook_log import CookLog
+from app.models.shopping_item import ShoppingItem
 
 __all__ = [
     "Recipe",
@@ -13,4 +14,5 @@ __all__ = [
     "Tag",
     "RecipeTag",
     "CookLog",
+    "ShoppingItem",
 ]

@@ -43,6 +43,13 @@ export interface RecipeDetail extends RecipeSummary {
   ingredients: RecipeIngredient[];
 }
 
+export interface ShoppingItem {
+  id: number;
+  name: string;
+  is_checked: boolean;
+  created_at: string;
+}
+
 export interface ScrapeResult {
   title: string | null;
   description: string | null;

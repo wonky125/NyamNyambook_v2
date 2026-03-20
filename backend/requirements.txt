@@ -13,3 +13,7 @@ python-multipart>=0.0.6
 supabase>=2.3.0
 python-dotenv>=1.0.0
 lxml>=5.0.0
+slowapi>=0.1.9
+recipe-scrapers>=15.0.0
+youtube-transcript-api>=0.6.0
+h2>=4.0.0

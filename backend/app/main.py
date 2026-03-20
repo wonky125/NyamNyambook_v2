@@ -2,9 +2,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.config import settings
-from app.routers import recipes, scrape, search, tags, cook_logs, images
+from app.limiter import limiter
+from app.routers import recipes, scrape, search, tags, cook_logs, images, shopping
 
 
 @asynccontextmanager
@@ -17,6 +20,8 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS 설정
 if settings.ENVIRONMENT == "production":
@@ -44,3 +49,4 @@ app.include_router(search.router, prefix="/search", tags=["search"])
 app.include_router(tags.router, prefix="/tags", tags=["tags"])
 app.include_router(cook_logs.router, prefix="/recipes", tags=["cook_logs"])
 app.include_router(images.router, prefix="/images", tags=["images"])
+app.include_router(shopping.router, prefix="/shopping", tags=["shopping"])

@@ -1,6 +1,24 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import type { RecipeDetail, RecipeSummary, ScrapeResult, Tag } from '../types';
+
+interface RecipePage {
+  items: RecipeSummary[];
+  meta: { total: number; page: number; per_page: number; total_pages: number };
+}
+
+export function useInfiniteRecipes(params?: { tag_id?: number; source_type?: string }) {
+  return useInfiniteQuery({
+    queryKey: ['recipes', params],
+    queryFn: async ({ pageParam }: { pageParam: number }) => {
+      const { data } = await api.get('/recipes', { params: { page: pageParam, per_page: 20, ...params } });
+      return data as RecipePage;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.meta.page < lastPage.meta.total_pages ? lastPage.meta.page + 1 : undefined,
+  });
+}
 
 export function useRecipes(params?: { tag_id?: number; source_type?: string }) {
   return useQuery({

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { useRecipes, useSearch, useMarkCooked, useDeleteRecipe, useTags } from '../hooks/useRecipes';
+import { useInfiniteRecipes, useSearch, useMarkCooked, useDeleteRecipe, useTags } from '../hooks/useRecipes';
 
 const COOKED_FILTERS = [
   { label: '전체', min: 0 },
@@ -19,9 +19,14 @@ export default function Dashboard() {
   const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
   const [cookedFilter, setCookedFilter] = useState<CookedFilter>(COOKED_FILTERS[0]);
 
-  const { data: recipes, isLoading, isError } = useRecipes(
-    selectedTagId ? { tag_id: selectedTagId } : undefined
-  );
+  const {
+    data: recipesData,
+    isLoading,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteRecipes(selectedTagId ? { tag_id: selectedTagId } : undefined);
   const { data: searchResults } = useSearch(query);
   const { data: tags } = useTags();
   const markCooked = useMarkCooked();
@@ -29,8 +34,10 @@ export default function Dashboard() {
 
   const toggleTag = (id: number) => setSelectedTagId(prev => prev === id ? null : id);
 
+  const allRecipes = recipesData?.pages.flatMap(p => p.items) ?? [];
+
   // 검색 중이면 검색 결과, 아니면 태그필터+요리횟수 필터 적용
-  const baseItems = query.trim() ? (searchResults ?? []) : (recipes ?? []);
+  const baseItems = query.trim() ? (searchResults ?? []) : allRecipes;
   const items = query.trim() ? baseItems : baseItems.filter(r => {
     if ('max' in cookedFilter && cookedFilter.max === 0) return r.cooked_count === 0;
     return r.cooked_count >= cookedFilter.min;
@@ -43,6 +50,7 @@ export default function Dashboard() {
         <h1 style={{ margin: 0 }}>🍚 냠냠북</h1>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={() => navigate('/add')}>+ 레시피 추가</button>
+          <button onClick={() => navigate('/shopping')}>🛒 장보기</button>
           <button onClick={() => signOut()}>로그아웃</button>
         </div>
       </div>
@@ -110,6 +118,7 @@ export default function Dashboard() {
       {/* 레시피 카드 그리드 */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
         {items.map(recipe => (
+
           <div key={recipe.id} style={{ border: '1px solid #ddd', borderRadius: 8, overflow: 'hidden', cursor: 'pointer' }}>
             {recipe.image_url && (
               <img src={recipe.image_url} alt={recipe.title} style={{ width: '100%', height: 160, objectFit: 'cover' }} />
@@ -148,6 +157,19 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      {/* 더 보기 버튼 — 검색 중이 아닐 때만 표시 */}
+      {!query.trim() && hasNextPage && (
+        <div style={{ textAlign: 'center', marginTop: 24 }}>
+          <button
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            style={{ padding: '10px 32px', fontSize: 14, cursor: 'pointer' }}
+          >
+            {isFetchingNextPage ? '불러오는 중...' : '더 보기'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

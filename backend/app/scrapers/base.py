@@ -27,7 +27,7 @@ class BaseScraper(ABC):
         ...
 
     async def _fetch_html(self) -> str:
-        async with httpx.AsyncClient(headers=HEADERS, timeout=15, follow_redirects=True) as client:
+        async with httpx.AsyncClient(headers=HEADERS, timeout=8, follow_redirects=True) as client:
             response = await client.get(self.url)
             response.raise_for_status()
             return response.text
