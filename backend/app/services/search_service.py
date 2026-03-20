@@ -27,10 +27,15 @@ async def search_recipes(
         .where(or_(Ingredient.name.ilike(keyword), Ingredient.name_en.ilike(keyword)))
     )
 
+    from app.models.recipe import RecipeStep
+    from app.models.ingredient import RecipeIngredient as RI
+
     stmt = (
         select(Recipe)
         .options(
             selectinload(Recipe.recipe_tags).selectinload(RecipeTag.tag),
+            selectinload(Recipe.recipe_ingredients).selectinload(RI.ingredient),
+            selectinload(Recipe.steps),
         )
         .where(
             Recipe.user_id == uuid.UUID(user_id),

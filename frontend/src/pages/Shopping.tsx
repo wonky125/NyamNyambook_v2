@@ -34,27 +34,32 @@ export default function Shopping() {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-        <button onClick={() => navigate('/dashboard')} style={{ fontSize: 13 }}>← 돌아가기</button>
-        <h1 style={{ margin: 0, fontSize: 22 }}>🛒 장보기 리스트</h1>
+    <div className="page--narrow">
+      <div className="page-header">
+        <button className="btn" onClick={() => navigate('/dashboard')}>← 돌아가기</button>
+        <h2>🛒 장보기 리스트</h2>
       </div>
 
       {/* 입력 */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+      <div className="flex gap-sm mb-xl">
         <input
+          className="input"
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="재료 입력 (예: 소고기 200g)"
-          style={{ flex: 1, padding: '10px 12px', fontSize: 15 }}
+          style={{ fontSize: 15 }}
         />
-        <button onClick={handleAdd} disabled={!input.trim() || addItem.isPending}>
+        <button
+          className="btn btn--primary"
+          onClick={handleAdd}
+          disabled={!input.trim() || addItem.isPending}
+        >
           추가
         </button>
       </div>
 
-      {isLoading && <p>불러오는 중...</p>}
+      {isLoading && <p className="text-muted text-center">불러오는 중...</p>}
 
       {/* 미체크 항목 */}
       {unchecked.length > 0 && (
@@ -62,10 +67,8 @@ export default function Shopping() {
           {unchecked.map(item => (
             <li
               key={item.id}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 0', borderBottom: '1px solid #f0f0f0',
-              }}
+              className="flex items-center gap-md"
+              style={{ padding: '10px 0', borderBottom: '1px solid var(--color-border-light)' }}
             >
               <input
                 type="checkbox"
@@ -75,8 +78,8 @@ export default function Shopping() {
               />
               <span style={{ flex: 1, fontSize: 15 }}>{item.name}</span>
               <button
+                className="btn--ghost text-sm text-muted"
                 onClick={() => deleteItem.mutate(item.id)}
-                style={{ fontSize: 12, color: '#999', background: 'none', border: 'none', cursor: 'pointer' }}
               >
                 삭제
               </button>
@@ -88,11 +91,11 @@ export default function Shopping() {
       {/* 체크된 항목 */}
       {checked.length > 0 && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontSize: 13, color: '#888' }}>완료 {checked.length}개</span>
+          <div className="flex justify-between items-center mb-sm">
+            <span className="text-sm text-muted">완료 {checked.length}개</span>
             <button
+              className="btn--ghost text-sm text-danger"
               onClick={() => clearChecked.mutate()}
-              style={{ fontSize: 12, color: '#e53e3e', background: 'none', border: 'none', cursor: 'pointer' }}
             >
               완료 항목 삭제
             </button>
@@ -101,9 +104,11 @@ export default function Shopping() {
             {checked.map(item => (
               <li
                 key={item.id}
+                className="flex items-center gap-md"
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 0', borderBottom: '1px solid #f0f0f0', opacity: 0.5,
+                  padding: '10px 0',
+                  borderBottom: '1px solid var(--color-border-light)',
+                  opacity: 0.5,
                 }}
               >
                 <input
@@ -114,8 +119,8 @@ export default function Shopping() {
                 />
                 <span style={{ flex: 1, fontSize: 15, textDecoration: 'line-through' }}>{item.name}</span>
                 <button
+                  className="btn--ghost text-sm text-muted"
                   onClick={() => deleteItem.mutate(item.id)}
-                  style={{ fontSize: 12, color: '#999', background: 'none', border: 'none', cursor: 'pointer' }}
                 >
                   삭제
                 </button>
@@ -126,7 +131,7 @@ export default function Shopping() {
       )}
 
       {!isLoading && items.length === 0 && (
-        <p style={{ textAlign: 'center', color: '#888', marginTop: 60 }}>
+        <p className="text-muted text-center" style={{ marginTop: 60 }}>
           장보기 항목을 추가해보세요
         </p>
       )}

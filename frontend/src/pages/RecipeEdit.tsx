@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRecipe, useUpdateRecipe, useUploadImage } from '../hooks/useRecipes';
-import api from '../lib/api';
+import { useTags } from '../hooks/useRecipes';
 
 export default function RecipeEdit() {
   const { id } = useParams<{ id: string }>();
@@ -9,7 +9,11 @@ export default function RecipeEdit() {
   const { data: recipe } = useRecipe(Number(id));
   const update = useUpdateRecipe(Number(id));
   const uploadImage = useUploadImage();
+  const { data: allTagsData } = useTags();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 이미지 버그 fix: 한 번만 초기화 (recipe 재조회로 덮어쓰기 방지)
+  const hasInitialized = useRef(false);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -19,38 +23,32 @@ export default function RecipeEdit() {
   const [stepsText, setStepsText] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [selectedTagNames, setSelectedTagNames] = useState<string[]>([]);
-  const [allTags, setAllTags] = useState<{ id: number; name: string }[]>([]);
   const [newTagInput, setNewTagInput] = useState('');
 
   useEffect(() => {
-    if (recipe) {
+    if (recipe && !hasInitialized.current) {
+      hasInitialized.current = true;
       setTitle(recipe.title);
       setDescription(recipe.description ?? '');
       setServings(recipe.servings ?? '');
       setNotes(recipe.notes ?? '');
       setImageUrl(recipe.image_url ?? '');
+      setSelectedTagNames(recipe.tags.map(t => t.name));
 
-      // 재료: "이름 수량 단위" 한 줄씩
       const ingLines = recipe.ingredients.map(ing => {
         const parts = [ing.ingredient.name, ing.amount, ing.unit].filter(Boolean);
         return parts.join(' ');
       });
       setIngredientsText(ingLines.join('\n'));
 
-      // 조리 단계: 한 줄씩
       const stepLines = recipe.steps
         .sort((a, b) => a.step_number - b.step_number)
         .map(s => s.instruction);
       setStepsText(stepLines.join('\n'));
-
-      // 현재 태그
-      setSelectedTagNames(recipe.tags.map(t => t.name));
     }
   }, [recipe]);
 
-  useEffect(() => {
-    api.get('/tags').then(r => setAllTags(r.data));
-  }, []);
+  const allTags = allTagsData ?? [];
 
   const toggleTag = (name: string) => {
     setSelectedTagNames(prev =>
@@ -75,23 +73,18 @@ export default function RecipeEdit() {
   const handleSave = async () => {
     if (!title.trim()) return alert('레시피 이름을 입력해주세요');
 
-    // 재료: 비어있지 않은 줄만
     const ingredients = ingredientsText
-      .split('\n')
-      .map(l => l.trim())
-      .filter(Boolean)
+      .split('\n').map(l => l.trim()).filter(Boolean)
       .map((name, i) => ({ name, sort_order: i }));
 
-    // 조리 단계: 비어있지 않은 줄만
     const steps = stepsText
-      .split('\n')
-      .map(l => l.trim())
-      .filter(Boolean)
+      .split('\n').map(l => l.trim()).filter(Boolean)
       .map((instruction, i) => ({ step_number: i + 1, instruction }));
 
-    // 태그: 이름 → ID (get_or_create)
     const tagResults = await Promise.all(
-      selectedTagNames.map(name => api.post('/tags', { name }).then(r => r.data.id as number))
+      selectedTagNames.map(name =>
+        import('../lib/api').then(m => m.default.post('/tags', { name }).then(r => r.data.id as number))
+      )
     );
 
     await update.mutateAsync({
@@ -110,16 +103,16 @@ export default function RecipeEdit() {
   if (!recipe) return <p style={{ padding: 20 }}>불러오는 중...</p>;
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-        <button onClick={() => navigate(-1)}>← 취소하고 돌아가기</button>
-        <h2 style={{ margin: 0 }}>레시피 수정</h2>
+    <div className="page--narrow">
+      <div className="page-header">
+        <button className="btn" onClick={() => navigate(-1)}>← 취소하고 돌아가기</button>
+        <h2>레시피 수정</h2>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="form">
         {/* 대표 이미지 */}
-        <div>
-          <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 'bold' }}>대표 이미지</label>
+        <div className="form-group">
+          <label className="label">대표 이미지</label>
           <input
             ref={fileInputRef}
             type="file"
@@ -128,26 +121,24 @@ export default function RecipeEdit() {
             style={{ display: 'none' }}
           />
           {imageUrl ? (
-            <div style={{ position: 'relative', display: 'inline-block' }}>
+            <div>
               <img
                 src={imageUrl}
                 alt="대표 이미지"
                 style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 6, display: 'block' }}
               />
-              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
-                <button onClick={() => fileInputRef.current?.click()} disabled={uploadImage.isPending} style={{ fontSize: 13 }}>
+              <div className="flex gap-sm mt-sm">
+                <button className="btn btn--sm" onClick={() => fileInputRef.current?.click()} disabled={uploadImage.isPending}>
                   {uploadImage.isPending ? '업로드 중...' : '이미지 변경'}
                 </button>
-                <button onClick={() => setImageUrl('')} style={{ fontSize: 13 }}>이미지 삭제</button>
+                <button className="btn btn--sm" onClick={() => setImageUrl('')}>이미지 삭제</button>
               </div>
             </div>
           ) : (
             <div
               onClick={() => fileInputRef.current?.click()}
-              style={{
-                border: '2px dashed #ccc', borderRadius: 6, padding: '24px 0',
-                textAlign: 'center', cursor: 'pointer', color: '#888', fontSize: 14,
-              }}
+              className="box box--subtle text-center text-muted"
+              style={{ cursor: 'pointer', padding: '24px 0', border: '2px dashed var(--color-border)' }}
             >
               {uploadImage.isPending ? '업로드 중...' : '+ 이미지 추가'}
             </div>
@@ -155,115 +146,99 @@ export default function RecipeEdit() {
         </div>
 
         {/* 기본 정보 */}
-        <div>
-          <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 'bold' }}>레시피 이름 *</label>
-          <input value={title} onChange={e => setTitle(e.target.value)} style={{ width: '100%', padding: '8px 12px', boxSizing: 'border-box' }} />
+        <div className="form-group">
+          <label className="label">레시피 이름 *</label>
+          <input className="input" value={title} onChange={e => setTitle(e.target.value)} />
         </div>
 
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>인분</label>
-            <input value={servings} onChange={e => setServings(e.target.value)} style={{ width: '100%', padding: '8px 12px', boxSizing: 'border-box' }} />
-          </div>
+        <div className="form-group">
+          <label className="label">인분</label>
+          <input className="input" value={servings} onChange={e => setServings(e.target.value)} />
         </div>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: 4, fontSize: 14 }}>설명</label>
-          <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} style={{ width: '100%', padding: '8px 12px', boxSizing: 'border-box' }} />
+        <div className="form-group">
+          <label className="label">설명</label>
+          <textarea className="textarea" value={description} onChange={e => setDescription(e.target.value)} rows={2} />
         </div>
 
         {/* 태그 */}
-        <div>
-          <label style={{ display: 'block', marginBottom: 6, fontSize: 14, fontWeight: 'bold' }}>태그</label>
-          {/* 기존 태그 칩 */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+        <div className="form-group">
+          <label className="label">태그</label>
+          <div className="flex flex-wrap gap-xs mb-sm">
             {allTags.map(tag => (
               <span
                 key={tag.id}
                 onClick={() => toggleTag(tag.name)}
-                style={{
-                  padding: '4px 12px', borderRadius: 16, fontSize: 13, cursor: 'pointer',
-                  background: selectedTagNames.includes(tag.name) ? '#f5a623' : '#f0f0f0',
-                  color: selectedTagNames.includes(tag.name) ? '#fff' : '#333',
-                  userSelect: 'none',
-                }}
+                className={`chip chip--clickable ${selectedTagNames.includes(tag.name) ? 'chip--active' : ''}`}
               >
                 {tag.name}
               </span>
             ))}
           </div>
-          {/* 새 태그 추가 */}
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div className="flex gap-sm">
             <input
+              className="input"
               placeholder="새 태그 추가"
               value={newTagInput}
               onChange={e => setNewTagInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addNewTag())}
-              style={{ flex: 1, padding: '6px 10px', fontSize: 13 }}
             />
-            <button onClick={addNewTag} style={{ fontSize: 13 }}>추가</button>
+            <button className="btn btn--sm" onClick={addNewTag}>추가</button>
           </div>
-          {/* 선택된 태그 중 기존 목록에 없는 것 표시 */}
-          {selectedTagNames.filter(n => !allTags.find(t => t.name === n)).map(name => (
-            <span
-              key={name}
-              onClick={() => toggleTag(name)}
-              style={{
-                display: 'inline-block', marginTop: 6, marginRight: 6,
-                padding: '4px 12px', borderRadius: 16, fontSize: 13, cursor: 'pointer',
-                background: '#f5a623', color: '#fff', userSelect: 'none',
-              }}
-            >
-              {name} ✕
-            </span>
-          ))}
+          <div className="flex flex-wrap gap-xs mt-sm">
+            {selectedTagNames.filter(n => !allTags.find(t => t.name === n)).map(name => (
+              <span
+                key={name}
+                onClick={() => toggleTag(name)}
+                className="chip chip--clickable chip--active"
+              >
+                {name} ✕
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* 재료 */}
-        <div>
-          <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 'bold' }}>
-            재료 목록 <span style={{ fontWeight: 'normal', color: '#888' }}>(한 줄에 하나)</span>
+        <div className="form-group">
+          <label className="label">
+            재료 목록 <span className="label--hint">(한 줄에 하나)</span>
           </label>
           <textarea
+            className="textarea"
             value={ingredientsText}
             onChange={e => setIngredientsText(e.target.value)}
             rows={8}
             placeholder={'양파 1개\n간장 2큰술\n참기름 1작은술'}
-            style={{ width: '100%', padding: '8px 12px', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.7 }}
           />
         </div>
 
         {/* 조리 순서 */}
-        <div>
-          <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 'bold' }}>
-            조리 순서 <span style={{ fontWeight: 'normal', color: '#888' }}>(줄바꿈으로 구분)</span>
+        <div className="form-group">
+          <label className="label">
+            조리 순서 <span className="label--hint">(줄바꿈으로 구분)</span>
           </label>
           <textarea
+            className="textarea"
             value={stepsText}
             onChange={e => setStepsText(e.target.value)}
             rows={10}
             placeholder={'냄비에 물을 끓인다.\n재료를 넣고 10분간 졸인다.\n불을 끄고 참기름을 두른다.'}
-            style={{ width: '100%', padding: '8px 12px', boxSizing: 'border-box', fontFamily: 'inherit', lineHeight: 1.7 }}
           />
         </div>
 
         {/* 메모 */}
-        <div>
-          <label style={{ display: 'block', marginBottom: 4, fontSize: 14, fontWeight: 'bold' }}>나만의 메모</label>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            rows={3}
-            style={{ width: '100%', padding: '8px 12px', boxSizing: 'border-box', background: '#fffde7' }}
-          />
+        <div className="form-group">
+          <label className="label">나만의 메모</label>
+          <textarea className="textarea textarea--note" value={notes} onChange={e => setNotes(e.target.value)} rows={3} />
         </div>
 
-        <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-          <button onClick={() => navigate(-1)} style={{ flex: 1, padding: '12px', fontSize: 15 }}>취소</button>
+        <div className="flex gap-md mt-sm">
+          <button className="btn" style={{ flex: 1 }} onClick={() => navigate(-1)}>취소</button>
           <button
+            className="btn btn--primary"
+            style={{ flex: 2 }}
             onClick={handleSave}
             disabled={update.isPending}
-            style={{ flex: 2, padding: '12px', fontSize: 15, background: '#f5a623', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer' }}
           >
             {update.isPending ? '저장 중...' : '저장하기'}
           </button>
