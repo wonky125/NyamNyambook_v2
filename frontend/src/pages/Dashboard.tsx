@@ -119,15 +119,12 @@ export default function Dashboard() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
         {items.map(recipe => (
 
-          <div key={recipe.id} style={{ border: '1px solid #ddd', borderRadius: 8, overflow: 'hidden', cursor: 'pointer' }}>
+          <div key={recipe.id} onClick={() => navigate(`/recipes/${recipe.id}`)} style={{ border: '1px solid #ddd', borderRadius: 8, overflow: 'hidden', cursor: 'pointer' }}>
             {recipe.image_url && (
               <img src={recipe.image_url} alt={recipe.title} style={{ width: '100%', height: 160, objectFit: 'cover' }} />
             )}
             <div style={{ padding: 12 }}>
-              <h3
-                style={{ margin: '0 0 6px', fontSize: 15 }}
-                onClick={() => navigate(`/recipes/${recipe.id}`)}
-              >
+              <h3 style={{ margin: '0 0 6px', fontSize: 15 }}>
                 {recipe.title}
               </h3>
               <div style={{ fontSize: 13, color: '#666', marginBottom: 8 }}>
@@ -144,10 +141,10 @@ export default function Dashboard() {
                 </div>
               )}
               <div style={{ display: 'flex', gap: 6 }}>
-                <button onClick={() => markCooked.mutate(recipe.id)} style={{ flex: 1, fontSize: 12 }}>요리했어요</button>
-                <button onClick={() => navigate(`/recipes/${recipe.id}/edit`)} style={{ fontSize: 12 }}>편집</button>
+                <button onClick={e => { e.stopPropagation(); markCooked.mutate(recipe.id); }} style={{ flex: 1, fontSize: 12 }}>요리했어요</button>
+                <button onClick={e => { e.stopPropagation(); navigate(`/recipes/${recipe.id}/edit`); }} style={{ fontSize: 12 }}>편집</button>
                 <button
-                  onClick={() => { if (confirm('삭제할까요?')) deleteRecipe.mutate(recipe.id); }}
+                  onClick={e => { e.stopPropagation(); if (confirm('삭제할까요?')) deleteRecipe.mutate(recipe.id); }}
                   style={{ fontSize: 12 }}
                 >
                   삭제
