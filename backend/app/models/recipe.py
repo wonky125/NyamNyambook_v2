@@ -43,3 +43,12 @@ class Recipe(Base):
     cook_logs: Mapped[list["CookLog"]] = relationship(
         "CookLog", back_populates="recipe", cascade="all, delete-orphan"
     )
+
+    # Pydantic 스키마 필드명 매핑 (recipe_ingredients → ingredients, recipe_tags → tags)
+    @property
+    def ingredients(self):
+        return self.recipe_ingredients
+
+    @property
+    def tags(self):
+        return self.recipe_tags

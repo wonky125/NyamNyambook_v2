@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
-import type { RecipeDetail, RecipeSummary, ScrapeResult } from '../types';
+import type { RecipeDetail, RecipeSummary, ScrapeResult, Tag } from '../types';
 
 export function useRecipes(params?: { tag_id?: number; source_type?: string }) {
   return useQuery({
@@ -71,5 +71,28 @@ export function useSearch(query: string) {
 export function useScrape() {
   return useMutation({
     mutationFn: (url: string) => api.post('/scrape', { url }).then(r => r.data as ScrapeResult),
+  });
+}
+
+export function useTags() {
+  return useQuery({
+    queryKey: ['tags'],
+    queryFn: async () => {
+      const { data } = await api.get('/tags');
+      return data as Tag[];
+    },
+  });
+}
+
+export function useUploadImage() {
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data } = await api.post('/images', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data.url as string;
+    },
   });
 }

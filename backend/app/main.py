@@ -18,11 +18,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS 설정 (Flutter Web 개발 중 필요)
+# CORS 설정
 if settings.ENVIRONMENT == "production":
-    origins = ["https://nyamnyambook.vercel.app"]
+    origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
 else:
-    origins = ["*"]  # 개발 중 모든 localhost 허용
+    origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,

@@ -7,81 +7,58 @@
 
 ## Phase 1: MVP (핵심)
 
+> **현재 상태**: 구현 진행 중 (2026-03-20 기준)
+> **프론트엔드 변경**: Flutter Web → **React + TypeScript + Vite** (결정 변경)
+
 ### 목표
 URL 하나로 레시피를 저장하고, 검색·태그·필터로 관리하며, 요리 횟수를 추적할 수 있는 완전한 서비스.
 
 ### Backend (FastAPI + Railway)
 
-- [ ] 프로젝트 초기 세팅 (FastAPI, SQLAlchemy 2.0, Alembic)
-- [ ] PostgreSQL DB 스키마 생성 (Supabase)
-- [ ] Alembic 마이그레이션 설정
-- [ ] Supabase Auth 연동 (JWT 검증 미들웨어)
-- [ ] 레시피 CRUD API (`GET/POST/PUT/DELETE /recipes`)
-- [ ] URL 스크래핑 API (`POST /scrape`)
-  - recipe-scrapers 라이브러리 (일반 레시피 사이트)
-  - 만개의레시피 전용 스크래퍼
-  - 네이버 블로그 전용 스크래퍼
-  - 자동 태그 생성 로직
-- [ ] 재료 CRUD + 영한 매핑 검색 (`GET /ingredients`)
-- [ ] 태그 CRUD (`GET/POST /tags`)
-- [ ] 검색 API (`GET /recipes?q=소고기&tag=볶음&cooked=2`)
-  - 다중키워드 AND 검색 (제목, 재료, 태그)
-  - 태그 필터, 요리횟수 필터
-- [ ] 요리 횟수 API (`POST /recipes/{id}/cook`)
-  - `cooked_count` 증가 + `cook_logs` 기록
-- [ ] 이미지 업로드 API (Supabase Storage)
+- [x] 프로젝트 초기 세팅 (FastAPI, SQLAlchemy 2.0, Alembic)
+- [x] PostgreSQL DB 스키마 생성 (Supabase, Alembic 마이그레이션 완료)
+- [x] Supabase Auth 연동 (JWT 검증 — ES256/JWKS 방식, HS256 폴백 포함)
+- [x] 레시피 CRUD API (`GET/POST/PUT/DELETE /recipes`) — 재료/단계/태그 포함
+- [x] URL 스크래핑 API (`POST /scrape`)
+  - [x] Schema.org 파서 (일반 레시피 사이트 — schema_org.py)
+  - [x] 만개의레시피 전용 스크래퍼 (100% 파싱 확인)
+  - [~] 네이버 블로그 스크래퍼 — **제목/이미지만 파싱, 재료/단계는 수동 입력 폴백** (블로그 구조 비정형으로 완전 파싱 포기)
+  - [x] 자동 태그 생성 로직 (auto_tagger.py)
+- [x] 태그 CRUD (`GET/POST /tags`)
+- [x] 검색 API (`GET /search?q=소고기`)
+- [x] 요리 횟수 API (`POST /recipes/{id}/cook`)
+- [x] 이미지 업로드 API (`POST /images` — Supabase Storage)
 
-### Frontend (Flutter Web + Vercel)
+### Frontend (React + TypeScript + Vite + Vercel)
 
-- [ ] Flutter Web 프로젝트 초기 세팅
-- [ ] Supabase Auth 연동 (Google 소셜 로그인)
-- [ ] 랜딩 페이지 (서비스 소개 + 로그인 버튼)
-- [ ] 대시보드 화면
-  - 레시피 카드 그리드
-  - 검색창
-  - 태그 필터 칩
-  - 요리횟수 상태 필터 (도전예정/1회+/2회++/3회이상+++)
-- [ ] 레시피 상세 화면
-  - 이미지, 제목, 출처 링크, 시간, 재료, 조리단계, 태그
-  - "요리했어요" 버튼 + 횟수 뱃지
-- [ ] 레시피 추가 화면
-  - URL 입력 탭 (스크래핑)
-  - 직접 입력 탭
-- [ ] 레시피 편집 화면
-- [ ] 이미지 업로드 UI
+> ⚠️ Flutter Web에서 React + TypeScript + Vite로 변경됨
+
+- [x] React + TypeScript + Vite 프로젝트 세팅
+- [x] Supabase Auth 연동 (Google 소셜 로그인)
+- [x] 랜딩 페이지 (서비스 소개 + 로그인 버튼)
+- [x] 대시보드 화면
+  - [x] 레시피 카드 그리드
+  - [x] 검색창 (실시간 검색)
+  - [x] 에러 상태 처리
+  - [ ] **태그 필터 칩** ← 미구현
+  - [ ] **요리횟수 상태 필터** ← 미구현
+- [x] 레시피 상세 화면 (이미지, 제목, 출처 링크, 재료, 조리단계, 태그, "요리했어요" 버튼)
+- [x] 레시피 추가 화면 (URL 스크래핑 + 직접 입력 + 태그 제안 UI)
+- [x] 레시피 편집 화면 (재료·조리단계·태그 편집 포함)
+- [ ] **이미지 업로드 UI** ← 미구현
 
 ### 데이터 (Phase 1에서 사용하는 테이블)
-- `users` / `recipes` / `recipe_steps` / `recipe_ingredients` / `ingredients` / `recipe_tags` / `tags` / `cook_logs`
+- `recipes` / `recipe_steps` / `recipe_ingredients` / `ingredients` / `recipe_tags` / `tags` / `cook_logs`
 
 ### 인증
-- Supabase Auth (Google OAuth)
+- Supabase Auth (Google OAuth, ES256 JWKS 방식)
 
 ### "진짜 제품" 체크리스트
-- [ ] 실제 Supabase DB 연결 (목업 데이터 X)
-- [ ] 실제 Supabase Auth (하드코딩된 사용자 X)
+- [x] 실제 Supabase DB 연결 (목업 데이터 X)
+- [x] 실제 Supabase Auth (하드코딩된 사용자 X)
 - [ ] Railway에 FastAPI 배포 완료 (localhost X)
-- [ ] Vercel에 Flutter Web 배포 완료
+- [ ] Vercel에 React Web 배포 완료
 - [ ] 다른 사람이 URL로 접속해서 써볼 수 있음
-
-### Phase 1 시작 프롬프트
-```
-이 PRD를 읽고 Phase 1을 구현해주세요.
-@PRD/01_PRD.md
-@PRD/02_DATA_MODEL.md
-@PRD/04_PROJECT_SPEC.md
-
-Phase 1 범위:
-- FastAPI 백엔드: 인증, 레시피 CRUD, URL 스크래핑(웹/네이버/만개의레시피), 검색/태그/필터, 요리횟수
-- Flutter Web 프론트: 랜딩, 대시보드, 레시피 상세/추가/편집
-- DB: Supabase PostgreSQL (02_DATA_MODEL.md 스키마 그대로)
-
-반드시 지켜야 할 것:
-- 04_PROJECT_SPEC.md의 "절대 하지 마" 목록 준수
-- JSON 컬럼 절대 사용 금지 (recipe_steps, recipe_ingredients, recipe_tags 테이블 사용)
-- 실제 Supabase 연결 (목업 데이터 X)
-- 실제 Supabase Auth (하드코딩 X)
-- 저작권: 레시피 공유 기능 만들지 말 것, source_url 표시만 허용
-```
 
 ---
 
@@ -139,6 +116,6 @@ Phase 1 범위:
 
 | Phase | 핵심 기능 | 상태 |
 |-------|----------|------|
-| Phase 1 (MVP) | 소셜로그인, CRUD, 스크래핑(웹/네이버/만개의레시피), 검색/태그/필터, 요리횟수 | 시작 전 |
+| Phase 1 (MVP) | 소셜로그인, CRUD, 스크래핑(웹/네이버/만개의레시피), 검색/태그/필터, 요리횟수 | **구현 중** (배포 전) |
 | Phase 2 (확장) | YouTube/Instagram 스크래핑, 장보기, 공개/비공개, 무한스크롤, Rate Limiting | Phase 1 완료 후 |
 | Phase 3 (고도화) | 링크공유, 인분계산, 평점/후기, PWA, 모바일 앱 | Phase 2 완료 후 |

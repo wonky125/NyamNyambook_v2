@@ -9,13 +9,13 @@
 
 | 영역 | 선택 | 이유 |
 |------|------|------|
-| Frontend | Flutter Web | 나중에 모바일 빌드 추가 가능, 코드 공유 |
-| Frontend 배포 | Vercel | Flutter Web 정적 파일 무료 호스팅 |
+| Frontend | ~~Flutter Web~~ → **React + TypeScript + Vite** | 개발 속도, 생태계. 모바일은 Phase 3에서 별도 검토 |
+| Frontend 배포 | Vercel | React 정적 파일 무료 호스팅 |
 | Backend | FastAPI (Python) | 기존 스크래핑 코드 재사용, async 지원 |
 | Backend 배포 | Railway | 장기실행 서버 필요 (스크래핑), Git push 자동 배포 |
 | DB | PostgreSQL (Supabase) | 무료 500MB, 관리 UI 편리, Row Level Security |
 | 이미지 저장 | Supabase Storage | DB와 같은 플랫폼, 무료 1GB |
-| 인증 | Supabase Auth | 소셜 로그인(Google/Kakao) 간편 연동 |
+| 인증 | Supabase Auth (Google OAuth) | ES256/JWKS 방식으로 JWT 검증 |
 | ORM | SQLAlchemy 2.0 | 기존 코드 기반, async 지원 |
 | DB 마이그레이션 | Alembic | SQLAlchemy 표준 마이그레이션 도구 |
 
@@ -56,33 +56,29 @@ backend/
 └── Dockerfile
 ```
 
-### Frontend (Flutter Web)
+### Frontend (React + TypeScript + Vite)
 ```
 frontend/
-├── lib/
-│   ├── main.dart
-│   ├── app.dart             # 라우팅 설정
-│   ├── screens/             # 화면
-│   │   ├── landing.dart
-│   │   ├── dashboard.dart
-│   │   ├── recipe_detail.dart
-│   │   ├── recipe_add.dart
-│   │   └── recipe_edit.dart
-│   ├── widgets/             # 재사용 UI 컴포넌트
-│   │   ├── recipe_card.dart
-│   │   ├── tag_chip.dart
-│   │   └── search_bar.dart
-│   ├── services/            # API 호출
-│   │   ├── api_client.dart
-│   │   ├── recipe_service.dart
-│   │   └── auth_service.dart
-│   ├── models/              # 데이터 모델
-│   │   └── recipe.dart
-│   └── providers/           # 상태 관리 (Riverpod or Provider)
-├── web/
-│   └── index.html
-├── pubspec.yaml
-└── .env                     # 환경변수
+├── src/
+│   ├── main.tsx             # 진입점
+│   ├── App.tsx              # 라우팅 설정 (react-router-dom)
+│   ├── pages/               # 화면
+│   │   ├── Landing.tsx
+│   │   ├── Dashboard.tsx
+│   │   ├── RecipeDetail.tsx
+│   │   ├── RecipeAdd.tsx
+│   │   └── RecipeEdit.tsx
+│   ├── hooks/               # React Query 훅
+│   │   ├── useAuth.ts
+│   │   └── useRecipes.ts
+│   ├── lib/
+│   │   └── api.ts           # Axios 인터셉터 (Supabase 토큰 자동 첨부)
+│   └── types/
+│       └── index.ts         # 타입 정의
+├── index.html
+├── vite.config.ts
+├── package.json
+└── .env                     # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_BASE_URL
 ```
 
 ---
@@ -126,13 +122,7 @@ http://localhost:8000/docs
 
 # Frontend 로컬 실행
 cd frontend
-flutter run -d chrome
-
-# Backend 타입 체크
-mypy app/
-
-# Backend 테스트
-pytest tests/
+npm run dev
 ```
 
 ---
@@ -151,10 +141,11 @@ git push origin main
 
 ### Frontend (Vercel)
 ```bash
-# Flutter Web 빌드
-flutter build web --release
+# React 빌드
+cd frontend
+npm run build
 
-# Vercel 배포 (빌드 결과물: build/web/)
+# Vercel 배포 (빌드 결과물: dist/)
 vercel --prod
 ```
 
@@ -175,9 +166,9 @@ vercel --prod
 ### Frontend (.env)
 | 변수명 | 설명 |
 |--------|------|
-| `SUPABASE_URL` | Supabase 프로젝트 URL |
-| `SUPABASE_ANON_KEY` | Supabase Anon Key (공개 가능) |
-| `API_BASE_URL` | FastAPI 서버 URL (Railway) |
+| `VITE_SUPABASE_URL` | Supabase 프로젝트 URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase Anon Key (공개 가능) |
+| `VITE_API_BASE_URL` | FastAPI 서버 URL (Railway, 로컬: http://localhost:8000) |
 
 > .env 파일은 절대 GitHub에 올리지 마세요. .gitignore에 추가 필수.
 
@@ -187,20 +178,19 @@ vercel --prod
 
 기존 Flask 앱(`C:\Users\Kayeon\Desktop\recipe-app\app\`)에서 아래 로직을 FastAPI로 포팅:
 
-| 기존 파일 | 재활용 내용 |
-|-----------|------------|
-| `scrapers/recipe10000.py` | 만개의레시피 스크래퍼 |
-| `scrapers/naver.py` | 네이버 블로그 스크래퍼 |
-| `scrapers/youtube.py` | YouTube 스크래퍼 (Phase 2) |
-| `scrapers/instagram.py` | Instagram 스크래퍼 (Phase 2) |
-| `utils/auto_tagger.py` | 자동 태그 생성 + 7개 카테고리 |
-| `utils/ingredient_mapping.py` | 영한 재료 매핑 50+ 항목 → DB 시드 |
-| `scrapers/text_splitter.py` | 비정형 텍스트 → 재료/단계 파싱 |
+| 기존 파일 | 재활용 내용 | 상태 |
+|-----------|------------|------|
+| `scrapers/recipe10000.py` | 만개의레시피 스크래퍼 | ✅ 포팅 완료 |
+| `scrapers/naver.py` | 네이버 블로그 스크래퍼 | ⚠️ 제목/이미지만 파싱. 재료/단계는 블로그 비정형 구조 한계로 포기 → 수동 입력 폴백 |
+| `scrapers/youtube.py` | YouTube 스크래퍼 (Phase 2) | Phase 2 |
+| `scrapers/instagram.py` | Instagram 스크래퍼 (Phase 2) | Phase 2 |
+| `utils/auto_tagger.py` | 자동 태그 생성 + 7개 카테고리 | ✅ 포팅 완료 |
+| `utils/ingredient_mapping.py` | 영한 재료 매핑 50+ 항목 | ✅ 포팅 완료 |
+| `scrapers/text_splitter.py` | 비정형 텍스트 파싱 | ⚠️ 네이버용으로만 사용, 효과 제한적 |
 
 ---
 
 ## [NEEDS CLARIFICATION]
 
-- [ ] Flutter 상태관리: Riverpod vs Provider vs Bloc
-- [ ] Supabase Auth: Google만 Phase 1에서? Kakao는 Phase 2?
+- [ ] Supabase Auth: Kakao 로그인은 Phase 2?
 - [ ] Railway 무료 크레딧 소진 시 대안 (Render, Fly.io)

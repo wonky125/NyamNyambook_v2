@@ -5,7 +5,7 @@
 ## 프로젝트
 
 URL 하나로 레시피를 저장하고 관리하는 웹 서비스.
-- **기술 스택**: Flutter Web (프론트) + FastAPI (백엔드) + PostgreSQL/Supabase (DB)
+- **기술 스택**: React + TypeScript + Vite (프론트) + FastAPI (백엔드) + PostgreSQL/Supabase (DB)
 - **PRD 전체**: `PRD/` 폴더 참조
 - **현재 Phase**: Phase 1 (MVP) — `PRD/03_PHASES.md` 확인
 
@@ -31,11 +31,10 @@ utils/       → 재사용 함수만. 특정 기능에 종속되면 안 됨.
 
 **Frontend 역할 분리:**
 ```
-screens/     → UI 화면만. 데이터 처리 로직 금지.
-widgets/     → 재사용 UI 컴포넌트만.
-services/    → API 호출만. UI 로직 금지.
-providers/   → 상태 관리만. API 호출 금지.
-models/      → 데이터 구조 정의만.
+pages/       → UI 화면만. 데이터 처리 로직 금지.
+hooks/       → React Query 훅. API 호출 + 상태 관리.
+lib/         → Axios 클라이언트 등 공통 유틸.
+types/       → 타입 정의만.
 ```
 
 ### 역할을 섞으면 안 되는 예시
